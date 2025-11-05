@@ -1,31 +1,24 @@
 ; não esqueça de abrir um arquivo .txt para executar o código 
 ; como foi feito no jdoodle, acaba que o programa vai dar erro por ser limitado
 ;abrir/fechar.s
-segment .data ; precisa inicializar a variável
-nome db "/uploads/text.txt",0 ; combinado com o abrir, termina a string quando acha o 0 no final (/0 de uma string)
-merrab db "Erro ao tentar abrir",10 ; metragem de erro de abertura, o 10 é uma instrução imprimir uma mensagem
+segment .data
+nome db "/uploads/teste.txt", 0
+merrab db "Erro ao tentar abrir arquivo", 10
 tam equ $-merrab
-segment .bss ; não precisa inicializar a variável 
-fd resd 1 ; descritor
 
-segment .text
+segment .bss
+fd resd 1;descritor
+buffer resb 20;vetor ou estrutura/ faremos uma repetição para descobrir o final do arquivo, se o eax retornar 20 ele repete ate o eax ser menor que 20 então ele imprime tudo
+qtd resb 1
+
+segment .text;inicio codigo
 global _start
 
-erro: ;print
-mov ecx, merrab
-mov edx, tam
-call exibir
-
-fim:
-mov eax,1; EXIT
-int 80h ; sys_call
-
 ;area de procedimento
-
 abrir:
-mov eax,5 ;OPEN
-mov ecx,0 ;modo RW(leitura e escrita) 2, por isso colocamos o 0 para apenas leitura ou 1 apenas escrita para que jdoodle suporte
-mov edx, 0q777 ;permissão total 0q-octal
+mov eax, 5; OPEN
+mov ecx, 0; 0 só leitura e 1 só escrita /2 modo RW leitura e escrita
+mov edx, 0q777; permissao total
 int 80h
 ret
 
@@ -34,19 +27,41 @@ mov eax, 6; CLOSE
 int 80h
 ret
 
-exibir:
-mov eax, 4; print
-mov ebx, 1; FD da tela
-int 80h
+exibir:;print
+; foram "passados" ponteiro e tamanho
+mov eax, 4; servico print
+mov ebx, 1; exibe na tela / FD da tela
+int 80h; chama o kernel (codigo, sistema), le oq ta no eax e executa
 ret
 
-_start:
-; abrindo 
-mov ebx, nome ; apontando para o nome
-call abrir ; para abrir o arquivo
-cmp eax, 0 ; comparando eax com 0
-jl erro ; se eax<0
-mov[fd], eax ; salva fd
-mov ebx,[fd] ;preparando o CLOSE
+_start: ;ponto de entrada
+;Abertura
+mov ebx, nome; aponta pro noe
+call abrir
+cmp eax, 0; se um número negativo dá erro o eax está rcebendo u retorno; no read ele também retorna o valor da qtd de caractéres digtados pelo usuário
+jl erro;se eax<0
+mov[fd], eax;salva fd
+
+;lendo o arquivo
+mov eax, 3;read o 3 é genérico
+mov ebx, [fd]
+mov ecx, buffer
+mov edx, 20
+int 80h
+
+;salva qtd
+mov [qtd], eax; coloca o que está em eax na qtd para eu poder impprimir o que está dentro do arquivo
+mov ecx, buffer
+mov edx,[qtd]
+call exibir
+
+mov ebx, [fd]; preparando CLOSE
 call fechar
-jmp fim ; contornar merrab
+jmp fim; contornar merrab
+erro: ; (print)
+mov ecx, merrab
+mov edx, tam
+call exibir
+fim:
+mov eax, 1; EXIT
+int 80h; sys_call
