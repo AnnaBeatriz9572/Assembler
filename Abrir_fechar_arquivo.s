@@ -1,3 +1,4 @@
+; não esqueça de abrir um arquivo .txt para executar o código 
 ; como foi feito no jdoodle, acaba que o programa vai dar erro por ser limitado
 ;abrir/fechar.s
 segment .data ; precisa inicializar a variável
@@ -23,7 +24,7 @@ int 80h ; sys_call
 
 abrir:
 mov eax,5 ;OPEN
-mov ecx,2 ;modo RW(leitura e escrita)
+mov ecx,0 ;modo RW(leitura e escrita) 2, por isso colocamos o 0 para apenas leitura ou 1 apenas escrita para que jdoodle suporte
 mov edx, 0q777 ;permissão total 0q-octal
 int 80h
 ret
